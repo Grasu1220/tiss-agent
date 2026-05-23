@@ -388,7 +388,7 @@ tr:hover td { background: var(--surface2); }
           <div class="card-title" style="margin-bottom:14px;">Profil produs TISS Optic</div>
           <div class="form-group" style="margin-bottom:12px;">
             <label>Pitch principal</label>
-            <textarea id="set-pitch" placeholder="ex: TISS Optic este un software complet pentru managementul cabinetelor optice — gestionare stoc lentile și rame, rețete, programări, rapoarte CAS. Interfață în română, suport local."></textarea>
+            <textarea id="set-pitch" placeholder="ex: TISS Optic este un software compvar pentru managementul cabinetelor optice — gestionare stoc lentile și rame, rețete, programări, rapoarte CAS. Interfață în română, suport local."></textarea>
           </div>
           <div class="form-group" style="margin-bottom:12px;">
             <label>Prețuri</label>
@@ -413,18 +413,18 @@ tr:hover td { background: var(--surface2); }
 
 <script>
 // ── STATE ──────────────────────────────────────────────
-let prospects = JSON.parse(localStorage.getItem('tiss_prospects') || '[]');
-let activityLog = JSON.parse(localStorage.getItem('tiss_activity') || '[]');
-let profile = JSON.parse(localStorage.getItem('tiss_profile') || '{}');
-let GEMINI_KEY = localStorage.getItem('tiss_apikey') || '';
+var prospects = JSON.parse(localStorage.getItem('tiss_prospects') || '[]');
+var activityLog = JSON.parse(localStorage.getItem('tiss_activity') || '[]');
+var profile = JSON.parse(localStorage.getItem('tiss_profile') || '{}');
+var GEMINI_KEY = localStorage.getItem('tiss_apikey') || '';
 
 // ── REPLACE THIS KEY WITH YOUR NEW KEY ────────────────
 // (cheia de mai jos este compromisă — înlocuiește-o)
-const EXAMPLE_KEY = const EXAMPLE_KEY = '';
+var EXAMPLE_KEY = 'AIzaSyDbfUZeHfNdnkbAb6g8h4HyYv0zv31HOok';
 if (!GEMINI_KEY && EXAMPLE_KEY) GEMINI_KEY = EXAMPLE_KEY;
 // ──────────────────────────────────────────────────────
 
-const PANELS = ['prospect','outreach','pipeline','settings'];
+var PANELS = ['prospect','outreach','pipeline','settings'];
 
 function switchPanel(name) {
   PANELS.forEach(p => {
@@ -433,7 +433,7 @@ function switchPanel(name) {
   document.querySelectorAll('.nav-item').forEach((el, i) => {
     el.classList.toggle('active', PANELS[i] === name);
   });
-  const titles = { prospect:'Prospecți', outreach:'Outreach', pipeline:'Pipeline', settings:'Setări' };
+  var titles = { prospect:'Prospecți', outreach:'Outreach', pipeline:'Pipeline', settings:'Setări' };
   document.getElementById('page-title').textContent = titles[name];
   if (name === 'pipeline') renderPipeline();
   if (name === 'settings') loadSettings();
@@ -441,7 +441,7 @@ function switchPanel(name) {
 
 // ── TOAST ──────────────────────────────────────────────
 function toast(msg) {
-  const el = document.getElementById('toast');
+  var el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
@@ -449,7 +449,7 @@ function toast(msg) {
 
 // ── STATS ──────────────────────────────────────────────
 function updateStats() {
-  const total = prospects.length;
+  var total = prospects.length;
   document.getElementById('s-total').textContent = total;
   document.getElementById('s-new').textContent = prospects.filter(p => p.status === 'nou').length;
   document.getElementById('s-int').textContent = prospects.filter(p => p.status === 'interesat').length;
@@ -460,46 +460,46 @@ function updateStats() {
 
 // ── OVERPASS / OSM SEARCH ──────────────────────────────
 async function runSearch() {
-  const city = document.getElementById('inp-city').value.trim();
+  var city = document.getElementById('inp-city').value.trim();
   if (!city) { toast('Introdu un oraș.'); return; }
-  const zone = document.getElementById('inp-zone').value.trim();
-  const query = city + (zone ? ', ' + zone : '');
+  var zone = document.getElementById('inp-zone').value.trim();
+  var query = city + (zone ? ', ' + zone : '');
 
-  const container = document.getElementById('search-results');
+  var container = document.getElementById('search-results');
   container.innerHTML = `<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ${query} via OpenStreetMap...</div>`;
 
   try {
     // Step 1: geocode city
-    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)},Romania&format=json&limit=1`, {
+    var geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)},Romania&format=json&limit=1`, {
       headers: { 'Accept-Language': 'ro' }
     });
-    const geoData = await geoRes.json();
+    var geoData = await geoRes.json();
     if (!geoData.length) { container.innerHTML = '<div class="empty"><p>Orașul nu a fost găsit. Încearcă alt nume.</p></div>'; return; }
 
-    const { lat, lon } = geoData[0];
-    const delta = 0.08;
+    var { lat, lon } = geoData[0];
+    var delta = 0.08;
 
     // Step 2: Overpass query for opticians
-    const overpassQ = `[out:json][timeout:25];(node["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta});way["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta}););out body;`;
-    const ovRes = await fetch('https://overpass-api.de/api/interpreter', {
+    var overpassQ = `[out:json][timeout:25];(node["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta});way["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta}););out body;`;
+    var ovRes = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: overpassQ
     });
-    const ovData = await ovRes.json();
-    const elements = ovData.elements || [];
+    var ovData = await ovRes.json();
+    var elements = ovData.elements || [];
 
     if (!elements.length) {
       container.innerHTML = `<div class="empty"><p>Nu am găsit cabinete optice înregistrate în OpenStreetMap pentru ${query}.<br>Încearcă un oraș mai mare sau o zonă diferită.</p></div>`;
       return;
     }
 
-    let html = `<table><thead><tr><th>Cabinet</th><th>Adresă</th><th>Telefon</th><th></th></tr></thead><tbody>`;
-    const found = elements.slice(0, 30);
+    var html = `<table><thead><tr><th>Cabinet</th><th>Adresă</th><th>Telefon</th><th></th></tr></thead><tbody>`;
+    var found = elements.slice(0, 30);
     found.forEach((el, i) => {
-      const t = el.tags || {};
-      const name = t.name || t['name:ro'] || 'Cabinet optic';
-      const street = t['addr:street'] ? t['addr:street'] + (t['addr:housenumber'] ? ' ' + t['addr:housenumber'] : '') : '—';
-      const phone = t.phone || t['contact:phone'] || '—';
+      var t = el.tags || {};
+      var name = t.name || t['name:ro'] || 'Cabinet optic';
+      var street = t['addr:street'] ? t['addr:street'] + (t['addr:housenumber'] ? ' ' + t['addr:housenumber'] : '') : '—';
+      var phone = t.phone || t['contact:phone'] || '—';
       html += `<tr>
         <td class="name-cell">${name}</td>
         <td style="font-size:12px;color:#999;">${street}</td>
@@ -525,7 +525,7 @@ function addProspect(name, city, phone, address) {
   if (prospects.find(p => p.name === name && p.city === city)) {
     toast('Deja în listă: ' + name); return;
   }
-  const p = { name, city, phone, address, status: 'nou', added: new Date().toLocaleDateString('ro-RO') };
+  var p = { name, city, phone, address, status: 'nou', added: new Date().toLocaleDateString('ro-RO') };
   prospects.push(p);
   updateStats();
   renderList();
@@ -536,14 +536,14 @@ function addProspect(name, city, phone, address) {
 
 // ── RENDER LIST ────────────────────────────────────────
 function renderList() {
-  const filter = document.getElementById('filter-sel').value;
-  const list = filter ? prospects.filter(p => p.status === filter) : prospects;
+  var filter = document.getElementById('filter-sel').value;
+  var list = filter ? prospects.filter(p => p.status === filter) : prospects;
   if (!list.length) {
     document.getElementById('list-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:#555;padding:20px;">Niciun prospect.</td></tr>`;
     return;
   }
   document.getElementById('list-body').innerHTML = list.map((p, i) => {
-    const ri = prospects.indexOf(p);
+    var ri = prospects.indexOf(p);
     return `<tr>
       <td class="name-cell">${p.name}</td>
       <td style="color:#999;font-size:12px;">${p.city}</td>
@@ -576,7 +576,7 @@ function changeStatus(idx, val) {
 }
 
 function loadOutreach(idx) {
-  const p = prospects[idx];
+  var p = prospects[idx];
   document.getElementById('o-name').value = p.name;
   document.getElementById('o-city').value = p.city;
   switchPanel('outreach');
@@ -584,25 +584,25 @@ function loadOutreach(idx) {
 
 // ── GEMINI SCRIPT GENERATION ───────────────────────────
 async function generateScript() {
-  const name = document.getElementById('o-name').value.trim();
-  const city = document.getElementById('o-city').value.trim();
-  const type = document.getElementById('o-type').value;
-  const soft = document.getElementById('o-soft').value.trim() || 'necunoscut';
+  var name = document.getElementById('o-name').value.trim();
+  var city = document.getElementById('o-city').value.trim();
+  var type = document.getElementById('o-type').value;
+  var soft = document.getElementById('o-soft').value.trim() || 'necunoscut';
 
   if (!name) { toast('Introdu numele cabinetului.'); return; }
 
-  const key = GEMINI_KEY || localStorage.getItem('tiss_apikey');
+  var key = GEMINI_KEY || localStorage.getItem('tiss_apikey');
   if (!key) { toast('Adaugă API key Gemini în Setări.'); switchPanel('settings'); return; }
 
-  const pitch = profile.pitch || 'TISS Optic — software complet pentru cabinete optice: stoc lentile și rame, rețete, programări, rapoarte CAS.';
-  const price = profile.price || 'Prima filială: 2999 RON implementare + 299 RON/lună. Filiале suplimentare: 1999 RON + de la 399 RON/lună.';
-  const adv = profile.adv || 'Interfață în română, suport local, actualizări legislative incluse, hotline + TeamViewer, SMS marketing.';
+  var pitch = profile.pitch || 'TISS Optic — software compvar pentru cabinete optice: stoc lentile și rame, rețete, programări, rapoarte CAS.';
+  var price = profile.price || 'Prima filială: 2999 RON implementare + 299 RON/lună. Filiале suplimentare: 1999 RON + de la 399 RON/lună.';
+  var adv = profile.adv || 'Interfață în română, suport local, actualizări legislative incluse, hotline + TeamViewer, SMS marketing.';
 
   document.getElementById('script-out').style.display = '';
   document.getElementById('script-txt').textContent = 'Se generează script...';
   document.getElementById('obj-txt').textContent = 'Se analizează obiecții...';
 
-  const prompt = `Ești un sales trainer expert în vânzări B2B de software pentru cabinete optice în România.
+  var prompt = `Ești un sales trainer expert în vânzări B2B de software pentru cabinete optice în România.
 
 Generează pentru un sales rep un script de cold call în română și obiecții probabile cu răspunsuri pentru:
 - Cabinet: "${name}", tip: "${type}", locație: "${city}"
@@ -612,10 +612,10 @@ Generează pentru un sales rep un script de cold call în română și obiecții
 - Avantaje: ${adv}
 
 Răspunde EXCLUSIV cu JSON valid, fără markdown, fără text extra:
-{"script":"scriptul complet de cold call, natural, max 180 cuvinte, cu salut/introducere/pitch/CTA","objections":"3 obiecții reale cu răspuns scurt la fiecare, format: OBIECȚIE: ... \\nRĂSPUNS: ... \\n\\n"}`;
+{"script":"scriptul compvar de cold call, natural, max 180 cuvinte, cu salut/introducere/pitch/CTA","objections":"3 obiecții reale cu răspuns scurt la fiecare, format: OBIECȚIE: ... \\nRĂSPUNS: ... \\n\\n"}`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    var res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -624,12 +624,12 @@ Răspunde EXCLUSIV cu JSON valid, fără markdown, fără text extra:
       })
     });
 
-    const data = await res.json();
+    var data = await res.json();
     if (data.error) { document.getElementById('script-txt').textContent = 'Eroare API: ' + data.error.message; return; }
 
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    var text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     text = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(text);
+    var parsed = JSON.parse(text);
 
     document.getElementById('script-txt').textContent = parsed.script || 'Eroare la parsare.';
     document.getElementById('obj-txt').textContent = parsed.objections || '—';
@@ -642,24 +642,24 @@ Răspunde EXCLUSIV cu JSON valid, fără markdown, fără text extra:
 }
 
 function copyScript() {
-  const txt = document.getElementById('script-txt').textContent;
+  var txt = document.getElementById('script-txt').textContent;
   navigator.clipboard.writeText(txt).then(() => toast('Script copiat!'));
 }
 
 // ── PIPELINE ───────────────────────────────────────────
 function renderPipeline() {
-  const total = prospects.length;
-  const cont = prospects.filter(p => ['contactat','interesat','client'].includes(p.status)).length;
-  const inter = prospects.filter(p => ['interesat','client'].includes(p.status)).length;
-  const cli = prospects.filter(p => p.status === 'client').length;
+  var total = prospects.length;
+  var cont = prospects.filter(p => ['contactat','interesat','client'].includes(p.status)).length;
+  var inter = prospects.filter(p => ['interesat','client'].includes(p.status)).length;
+  var cli = prospects.filter(p => p.status === 'client').length;
 
   document.getElementById('p-total').textContent = total;
   document.getElementById('p-cont').textContent = cont;
   document.getElementById('p-demo').textContent = inter;
   document.getElementById('p-cli').textContent = cli;
 
-  const max = Math.max(total, 1);
-  const stages = [
+  var max = Math.max(total, 1);
+  var stages = [
     { label: 'Prospecți totali', val: total, color: '#4f8ef7' },
     { label: 'Contactați', val: cont, color: '#f7a24f' },
     { label: 'Interesați', val: inter, color: '#3ecf8e' },
@@ -673,7 +673,7 @@ function renderPipeline() {
     </div>
   `).join('');
 
-  const log = activityLog.slice(0, 10);
+  var log = activityLog.slice(0, 10);
   document.getElementById('activity').innerHTML = log.length
     ? log.map(a => `<div class="activity-item"><span class="activity-text">${a.text}</span><span class="activity-time">${a.time}</span></div>`).join('')
     : '<div class="empty"><p>Nicio activitate înregistrată.</p></div>';
@@ -688,7 +688,7 @@ function logActivity(text) {
 
 // ── SETTINGS ───────────────────────────────────────────
 function loadSettings() {
-  const saved = localStorage.getItem('tiss_apikey') || '';
+  var saved = localStorage.getItem('tiss_apikey') || '';
   if (saved) document.getElementById('set-apikey').value = saved;
   document.getElementById('set-pitch').value = profile.pitch || '';
   document.getElementById('set-price').value = profile.price || '';
@@ -696,7 +696,7 @@ function loadSettings() {
 }
 
 function saveApiKey() {
-  const key = document.getElementById('set-apikey').value.trim();
+  var key = document.getElementById('set-apikey').value.trim();
   if (!key) { toast('Introdu API key-ul.'); return; }
   GEMINI_KEY = key;
   localStorage.setItem('tiss_apikey', key);

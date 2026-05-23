@@ -509,8 +509,8 @@ async function runSearch() {
   container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ' + query + ' via OpenStreetMap...</div>';
 
   try {
-    var cityKey = city.toLowerCase().trim();
-    var coords = ORASE[cityKey];
+    var cityKey = city.toLowerCase().trim().replace(/[șş]/g,"s").replace(/[țţ]/g,"t").replace(/[ăâ]/g,"a").replace(/î/g,"i");
+    var coords = ORASE[cityKey] || ORASE[city.toLowerCase().trim()];
     if (!coords) {
       container.innerHTML = '<div class="empty"><p>Orașul <strong>' + city + '</strong> nu este în lista noastră.<br>Orașe disponibile: București, Cluj, Timișoara, Iași, Constanța, Craiova, Brașov, Galați, Ploiești, Oradea, Arad, Pitești, Sibiu, Bacău și altele.</p></div>';
       return;

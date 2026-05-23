@@ -287,6 +287,16 @@ tr:hover td { background: var(--surface2); }
         </div>
         <div class="card">
           <div class="card-title" style="margin-bottom:14px;">Date prospect</div>
+
+          <!-- Prospect selector -->
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Selectează din lista ta sau completează manual</label>
+            <div style="position:relative;">
+              <input type="text" id="o-search" placeholder="Caută în prospecți salvați..." oninput="filterProspectDropdown(this.value)" onfocus="showDropdown()" autocomplete="off" />
+              <div id="o-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);max-height:200px;overflow-y:auto;z-index:100;margin-top:4px;"></div>
+            </div>
+          </div>
+
           <div class="form-grid">
             <div class="form-group">
               <label>Nume cabinet</label>
@@ -652,6 +662,52 @@ function loadOutreach(idx) {
 }
 
 // ── GEMINI SCRIPT GENERATION ───────────────────────────
+function showDropdown() {
+  filterProspectDropdown(document.getElementById('o-search').value);
+}
+
+function filterProspectDropdown(query) {
+  var dd = document.getElementById('o-dropdown');
+  var q = query.toLowerCase().trim();
+  var filtered = q
+    ? prospects.filter(function(p){ return p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q); })
+    : prospects;
+
+  if (!filtered.length) {
+    dd.style.display = 'none';
+    return;
+  }
+
+  dd.innerHTML = filtered.slice(0, 20).map(function(p, i) {
+    var idx = prospects.indexOf(p);
+    return '<div onclick="selectProspectForOutreach(' + idx + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">' +
+      '<span style="font-weight:500;">' + p.name + '</span>' +
+      '<span style="color:#666;font-size:11px;margin-left:8px;">' + p.city + '</span>' +
+      '<span style="float:right;font-size:11px;color:#555;" class="status-pill status-' + p.status + '">' + p.status + '</span>' +
+    '</div>';
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function selectProspectForOutreach(idx) {
+  var p = prospects[idx];
+  if (!p) return;
+  document.getElementById('o-name').value = p.name;
+  document.getElementById('o-city').value = p.city;
+  document.getElementById('o-search').value = p.name + ' — ' + p.city;
+  document.getElementById('o-dropdown').style.display = 'none';
+  if (p.phone && p.phone !== '-') {
+    document.getElementById('o-soft').placeholder = 'Telefon: ' + p.phone;
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('o-dropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'o-search') {
+    dd.style.display = 'none';
+  }
+});
+
 async function generateScript() {
   var name = document.getElementById('o-name').value.trim();
   var city = document.getElementById('o-city').value.trim();

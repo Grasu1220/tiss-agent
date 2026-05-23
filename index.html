@@ -470,7 +470,8 @@ async function runSearch() {
 
   try {
     // Step 1: geocode city
-    var geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)},Romania&format=json&limit=1`, {
+    var nominatimUrl = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + ',Romania&format=json&limit=1';
+    var geoRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(nominatimUrl), {
       headers: { 'Accept-Language': 'ro' }
     });
     var geoData = await geoRes.json();
@@ -481,9 +482,10 @@ async function runSearch() {
 
     // Step 2: Overpass query for opticians
     var overpassQ = `[out:json][timeout:25];(node["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta});way["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta}););out body;`;
-    var ovRes = await fetch('https://overpass-api.de/api/interpreter', {
+    var ovRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent('https://overpass-api.de/api/interpreter'), {
       method: 'POST',
-      body: overpassQ
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(overpassQ)
     });
     var ovData = await ovRes.json();
     var elements = ovData.elements || [];

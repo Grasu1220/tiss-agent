@@ -743,7 +743,7 @@ Răspunde EXCLUSIV cu JSON valid, fără markdown, fără text extra:
 {"script":"scriptul compvar de cold call, natural, max 180 cuvinte, cu salut/introducere/pitch/CTA","objections":"3 obiecții reale cu răspuns scurt la fiecare, format: OBIECȚIE: ... \\nRĂSPUNS: ... \\n\\n"}`;
 
   try {
-    var res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${key}`, {
+    var res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -371,17 +371,19 @@ tr:hover td { background: var(--surface2); }
         <div class="card">
           <div class="card-title" style="margin-bottom:14px;">Configurare API</div>
           <div class="form-group" style="margin-bottom:12px;">
-            <label>Gemini API Key</label>
-            <input type="password" id="set-apikey" placeholder="Paste key here" />
+            <label>Gemini API Key (scripturi AI)</label>
+            <input type="password" id="set-apikey" placeholder="Paste Gemini key here" />
+            <span style="font-size:11px;color:#555;margin-top:3px;">Obtii gratuit de pe aistudio.google.com &rarr; Get API Key</span>
           </div>
-          <div class="ai-hint" style="margin-bottom:14px;">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Obții API key gratuit de pe <strong>aistudio.google.com</strong> → Get API Key. Nu necesită card bancar.
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Foursquare API Key (cautare cabinete)</label>
+            <input type="password" id="set-fskey" placeholder="Paste Foursquare key here" />
+            <span style="font-size:11px;color:#555;margin-top:3px;">Obtii gratuit de pe foursquare.com/developer &rarr; Create App &rarr; API Key</span>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salvează key</button>
+            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salveaza keys</button>
           </div>
-          <div class="save-confirm" id="api-saved">✓ API key salvat. Agentul este activ.</div>
+          <div class="save-confirm" id="api-saved">&#10003; API keys salvate. Agentul este activ.</div>
         </div>
 
         <div class="card">
@@ -458,112 +460,73 @@ function updateStats() {
   localStorage.setItem('tiss_prospects', JSON.stringify(prospects));
 }
 
-// ── COORDONATE ORAȘE ROMÂNIA ───────────────────────────
-var ORASE = {
-  'bucuresti': {lat:44.4268, lon:26.1025}, 'bucharest': {lat:44.4268, lon:26.1025},
-  'cluj': {lat:46.7712, lon:23.6236}, 'cluj-napoca': {lat:46.7712, lon:23.6236},
-  'timisoara': {lat:45.7489, lon:21.2087}, 'timișoara': {lat:45.7489, lon:21.2087},
-  'iasi': {lat:47.1585, lon:27.6014}, 'iași': {lat:47.1585, lon:27.6014},
-  'constanta': {lat:44.1598, lon:28.6348}, 'constanța': {lat:44.1598, lon:28.6348},
-  'craiova': {lat:44.3302, lon:23.7949},
-  'brasov': {lat:45.6427, lon:25.5887}, 'brașov': {lat:45.6427, lon:25.5887},
-  'galati': {lat:45.4353, lon:28.0080}, 'galați': {lat:45.4353, lon:28.0080},
-  'ploiesti': {lat:44.9454, lon:26.0365}, 'ploiești': {lat:44.9454, lon:26.0365},
-  'oradea': {lat:47.0722, lon:21.9217},
-  'arad': {lat:46.1866, lon:21.3123},
-  'pitesti': {lat:44.8565, lon:24.8692}, 'pitești': {lat:44.8565, lon:24.8692},
-  'sibiu': {lat:45.7983, lon:24.1256},
-  'bacau': {lat:46.5670, lon:26.9146}, 'bacău': {lat:46.5670, lon:26.9146},
-  'targu mures': {lat:46.5386, lon:24.5578}, 'târgu mureș': {lat:46.5386, lon:24.5578},
-  'baia mare': {lat:47.6567, lon:23.5850},
-  'buzau': {lat:45.1500, lon:26.8200}, 'buzău': {lat:45.1500, lon:26.8200},
-  'satu mare': {lat:47.7921, lon:22.8858},
-  'botosani': {lat:47.7456, lon:26.6663}, 'botoșani': {lat:47.7456, lon:26.6663},
-  'suceava': {lat:47.6514, lon:26.2556},
-  'ramnicu valcea': {lat:45.1047, lon:24.3693}, 'râmnicu vâlcea': {lat:45.1047, lon:24.3693},
-  'drobeta turnu severin': {lat:44.6292, lon:22.6564},
-  'alexandria': {lat:43.9769, lon:25.3349},
-  'slobozia': {lat:44.5636, lon:27.3650},
-  'tulcea': {lat:45.1788, lon:28.8006},
-  'deva': {lat:45.8833, lon:22.9000},
-  'resita': {lat:45.3000, lon:21.8833}, 'reșița': {lat:45.3000, lon:21.8833},
-  'alba iulia': {lat:46.0667, lon:23.5833},
-  'zalau': {lat:47.1833, lon:23.0500}, 'zalău': {lat:47.1833, lon:23.0500},
-  'sfantu gheorghe': {lat:45.8667, lon:25.7833}, 'sfântu gheorghe': {lat:45.8667, lon:25.7833},
-  'miercurea ciuc': {lat:46.3569, lon:25.8028},
-  'dej': {lat:47.1500, lon:23.8667},
-  'turda': {lat:46.5667, lon:23.7833},
-  'bistrita': {lat:47.1333, lon:24.5000}, 'bistrița': {lat:47.1333, lon:24.5000},
-  'roman': {lat:46.9167, lon:26.9167},
-  'focsani': {lat:45.6964, lon:27.1858}, 'focșani': {lat:45.6964, lon:27.1858},
-  'targoviste': {lat:44.9306, lon:25.4561}, 'târgoviște': {lat:44.9306, lon:25.4561},
-};
-
+// ── FOURSQUARE SEARCH ────────────────────────────────────
 async function runSearch() {
   var city = document.getElementById('inp-city').value.trim();
-  if (!city) { toast('Introdu un oraș.'); return; }
+  if (!city) { toast('Introdu un oras.'); return; }
   var zone = document.getElementById('inp-zone').value.trim();
   var query = city + (zone ? ', ' + zone : '');
 
+  var fsKey = localStorage.getItem('tiss_fskey') || '';
+  if (!fsKey) {
+    toast('Adauga Foursquare API key in Setari.');
+    switchPanel('settings');
+    return;
+  }
+
   var container = document.getElementById('search-results');
-  container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ' + query + ' via OpenStreetMap...</div>';
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se cauta cabinete optice in ' + query + '...</div>';
 
   try {
-    var cityKey = city.toLowerCase().trim().replace(/[șş]/g,"s").replace(/[țţ]/g,"t").replace(/[ăâ]/g,"a").replace(/î/g,"i");
-    var coords = ORASE[cityKey] || ORASE[city.toLowerCase().trim()];
-    if (!coords) {
-      container.innerHTML = '<div class="empty"><p>Orașul <strong>' + city + '</strong> nu este în lista noastră.<br>Orașe disponibile: București, Cluj, Timișoara, Iași, Constanța, Craiova, Brașov, Galați, Ploiești, Oradea, Arad, Pitești, Sibiu, Bacău și altele.</p></div>';
-      return;
-    }
-    var lat = coords.lat;
-    var lon = coords.lon;
-    var delta = 0.08;
+    var url = 'https://api.foursquare.com/v3/places/search?query=optica&near=' + encodeURIComponent(query + ', Romania') + '&categories=15014&limit=50&fields=name,location,tel';
 
-    // Step 2: Overpass query for opticians
-    var overpassQ = `[out:json][timeout:25];(node["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta});way["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta}););out body;`;
-    var ovRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent('https://overpass-api.de/api/interpreter'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'data=' + encodeURIComponent(overpassQ)
+    var res = await fetch(url, {
+      headers: { 'Authorization': fsKey, 'Accept': 'application/json' }
     });
-    var ovData = await ovRes.json();
-    var elements = ovData.elements || [];
 
-    if (!elements.length) {
-      container.innerHTML = `<div class="empty"><p>Nu am găsit cabinete optice înregistrate în OpenStreetMap pentru ${query}.<br>Încearcă un oraș mai mare sau o zonă diferită.</p></div>`;
+    if (!res.ok) {
+      var errData = await res.json().catch(function(){return {};});
+      container.innerHTML = '<div class="empty"><p>Eroare API Foursquare: ' + (errData.message || res.status) + '<br>Verifica API key-ul in Setari.</p></div>';
       return;
     }
 
-    var html = `<table><thead><tr><th>Cabinet</th><th>Adresă</th><th>Telefon</th><th></th></tr></thead><tbody>`;
-    var found = elements.slice(0, 30);
-    found.forEach((el, i) => {
-      var t = el.tags || {};
-      var name = t.name || t['name:ro'] || 'Cabinet optic';
-      var street = t['addr:street'] ? t['addr:street'] + (t['addr:housenumber'] ? ' ' + t['addr:housenumber'] : '') : '—';
-      var phone = t.phone || t['contact:phone'] || '—';
-      html += `<tr>
-        <td class="name-cell">${name}</td>
-        <td style="font-size:12px;color:#999;">${street}</td>
-        <td class="mono">${phone}</td>
-        <td>
-          <button class="btn btn-ghost btn-sm" onclick="addProspect('${name.replace(/'/g,"\\'")}','${city}','${phone.replace(/'/g,"\\'")}','${street.replace(/'/g,"\\'")}')">
-            + Adaugă
-          </button>
-        </td>
-      </tr>`;
+    var data = await res.json();
+    var results = data.results || [];
+
+    if (!results.length) {
+      container.innerHTML = '<div class="empty"><p>Nu am gasit cabinete optice in <strong>' + query + '</strong>.<br>Incearca un alt oras sau zona.</p></div>';
+      return;
+    }
+
+    var html = '<table><thead><tr><th>Cabinet</th><th>Adresa</th><th>Telefon</th><th></th></tr></thead><tbody>';
+    results.forEach(function(place) {
+      var name = (place.name || 'Cabinet optic').replace(/'/g, "&#39;");
+      var loc = place.location || {};
+      var address = (loc.address || loc.formatted_address || '-').replace(/'/g, "&#39;");
+      var phone = (place.tel || '-').replace(/'/g, "&#39;");
+      var cityEsc = city.replace(/'/g, "&#39;");
+      html += '<tr>' +
+        '<td class="name-cell">' + name + '</td>' +
+        '<td style="font-size:12px;color:#999;">' + address + '</td>' +
+        '<td class="mono">' + phone + '</td>' +
+        '<td><button class="btn btn-ghost btn-sm" onclick="addProspect(this);" data-name="' + name + '" data-city="' + cityEsc + '" data-phone="' + phone + '" data-addr="' + address + '">+ Adauga</button></td>' +
+        '</tr>';
     });
-    html += `</tbody></table>`;
-    html += `<div style="font-size:11px;color:#555;margin-top:10px;">Sursa: OpenStreetMap · ${found.length} rezultate găsite</div>`;
+    html += '</tbody></table>';
+    html += '<div style="font-size:11px;color:#555;margin-top:10px;">Sursa: Foursquare Places &middot; ' + results.length + ' rezultate gasite</div>';
     container.innerHTML = html;
 
   } catch(err) {
-    container.innerHTML = `<div class="empty"><p>Eroare la căutare: ${err.message}. Verifică conexiunea.</p></div>`;
+    container.innerHTML = '<div class="empty"><p>Eroare la cautare: ' + err.message + '</p></div>';
   }
 }
-
 // ── ADD PROSPECT ───────────────────────────────────────
-function addProspect(name, city, phone, address) {
-  if (prospects.find(p => p.name === name && p.city === city)) {
+function addProspect(el) {
+  var name = el ? el.getAttribute('data-name') : '';
+  var city = el ? el.getAttribute('data-city') : '';
+  var phone = el ? el.getAttribute('data-phone') : '';
+  var address = el ? el.getAttribute('data-addr') : '';
+  if (prospects.find(function(p){ return p.name === name && p.city === city; })) {
     toast('Deja în listă: ' + name); return;
   }
   var p = { name, city, phone, address, status: 'nou', added: new Date().toLocaleDateString('ro-RO') };
@@ -731,6 +694,8 @@ function logActivity(text) {
 function loadSettings() {
   var saved = localStorage.getItem('tiss_apikey') || '';
   if (saved) document.getElementById('set-apikey').value = saved;
+  var fsaved = localStorage.getItem('tiss_fskey') || '';
+  if (fsaved) document.getElementById('set-fskey').value = fsaved;
   document.getElementById('set-pitch').value = profile.pitch || '';
   document.getElementById('set-price').value = profile.price || '';
   document.getElementById('set-adv').value = profile.adv || '';
@@ -738,7 +703,9 @@ function loadSettings() {
 
 function saveApiKey() {
   var key = document.getElementById('set-apikey').value.trim();
-  if (!key) { toast('Introdu API key-ul.'); return; }
+  var fskey = document.getElementById('set-fskey').value.trim();
+  if (fskey) localStorage.setItem('tiss_fskey', fskey);
+  if (!key) { toast('Introdu Gemini API key-ul.'); return; }
   GEMINI_KEY = key;
   localStorage.setItem('tiss_apikey', key);
   document.getElementById('api-saved').style.display = 'block';

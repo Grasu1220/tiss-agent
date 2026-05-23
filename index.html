@@ -372,7 +372,7 @@ tr:hover td { background: var(--surface2); }
           <div class="card-title" style="margin-bottom:14px;">Configurare API</div>
           <div class="form-group" style="margin-bottom:12px;">
             <label>Gemini API Key</label>
-            <input type="password" id="set-apikey" placeholder="AIzaSy..." />
+            <input type="password" id="set-apikey" placeholder="Paste key here" />
           </div>
           <div class="ai-hint" style="margin-bottom:14px;">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -420,7 +420,7 @@ var GEMINI_KEY = localStorage.getItem('tiss_apikey') || '';
 
 // ── REPLACE THIS KEY WITH YOUR NEW KEY ────────────────
 // (cheia de mai jos este compromisă — înlocuiește-o)
-var EXAMPLE_KEY = 'AIzaSyDbfUZeHfNdnkbAb6g8h4HyYv0zv31HOok';
+var EXAMPLE_KEY = '';
 if (!GEMINI_KEY && EXAMPLE_KEY) GEMINI_KEY = EXAMPLE_KEY;
 // ──────────────────────────────────────────────────────
 

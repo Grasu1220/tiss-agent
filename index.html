@@ -458,7 +458,47 @@ function updateStats() {
   localStorage.setItem('tiss_prospects', JSON.stringify(prospects));
 }
 
-// ── OVERPASS / OSM SEARCH ──────────────────────────────
+// ── COORDONATE ORAȘE ROMÂNIA ───────────────────────────
+var ORASE = {
+  'bucuresti': {lat:44.4268, lon:26.1025}, 'bucharest': {lat:44.4268, lon:26.1025},
+  'cluj': {lat:46.7712, lon:23.6236}, 'cluj-napoca': {lat:46.7712, lon:23.6236},
+  'timisoara': {lat:45.7489, lon:21.2087}, 'timișoara': {lat:45.7489, lon:21.2087},
+  'iasi': {lat:47.1585, lon:27.6014}, 'iași': {lat:47.1585, lon:27.6014},
+  'constanta': {lat:44.1598, lon:28.6348}, 'constanța': {lat:44.1598, lon:28.6348},
+  'craiova': {lat:44.3302, lon:23.7949},
+  'brasov': {lat:45.6427, lon:25.5887}, 'brașov': {lat:45.6427, lon:25.5887},
+  'galati': {lat:45.4353, lon:28.0080}, 'galați': {lat:45.4353, lon:28.0080},
+  'ploiesti': {lat:44.9454, lon:26.0365}, 'ploiești': {lat:44.9454, lon:26.0365},
+  'oradea': {lat:47.0722, lon:21.9217},
+  'arad': {lat:46.1866, lon:21.3123},
+  'pitesti': {lat:44.8565, lon:24.8692}, 'pitești': {lat:44.8565, lon:24.8692},
+  'sibiu': {lat:45.7983, lon:24.1256},
+  'bacau': {lat:46.5670, lon:26.9146}, 'bacău': {lat:46.5670, lon:26.9146},
+  'targu mures': {lat:46.5386, lon:24.5578}, 'târgu mureș': {lat:46.5386, lon:24.5578},
+  'baia mare': {lat:47.6567, lon:23.5850},
+  'buzau': {lat:45.1500, lon:26.8200}, 'buzău': {lat:45.1500, lon:26.8200},
+  'satu mare': {lat:47.7921, lon:22.8858},
+  'botosani': {lat:47.7456, lon:26.6663}, 'botoșani': {lat:47.7456, lon:26.6663},
+  'suceava': {lat:47.6514, lon:26.2556},
+  'ramnicu valcea': {lat:45.1047, lon:24.3693}, 'râmnicu vâlcea': {lat:45.1047, lon:24.3693},
+  'drobeta turnu severin': {lat:44.6292, lon:22.6564},
+  'alexandria': {lat:43.9769, lon:25.3349},
+  'slobozia': {lat:44.5636, lon:27.3650},
+  'tulcea': {lat:45.1788, lon:28.8006},
+  'deva': {lat:45.8833, lon:22.9000},
+  'resita': {lat:45.3000, lon:21.8833}, 'reșița': {lat:45.3000, lon:21.8833},
+  'alba iulia': {lat:46.0667, lon:23.5833},
+  'zalau': {lat:47.1833, lon:23.0500}, 'zalău': {lat:47.1833, lon:23.0500},
+  'sfantu gheorghe': {lat:45.8667, lon:25.7833}, 'sfântu gheorghe': {lat:45.8667, lon:25.7833},
+  'miercurea ciuc': {lat:46.3569, lon:25.8028},
+  'dej': {lat:47.1500, lon:23.8667},
+  'turda': {lat:46.5667, lon:23.7833},
+  'bistrita': {lat:47.1333, lon:24.5000}, 'bistrița': {lat:47.1333, lon:24.5000},
+  'roman': {lat:46.9167, lon:26.9167},
+  'focsani': {lat:45.6964, lon:27.1858}, 'focșani': {lat:45.6964, lon:27.1858},
+  'targoviste': {lat:44.9306, lon:25.4561}, 'târgoviște': {lat:44.9306, lon:25.4561},
+};
+
 async function runSearch() {
   var city = document.getElementById('inp-city').value.trim();
   if (!city) { toast('Introdu un oraș.'); return; }
@@ -466,18 +506,17 @@ async function runSearch() {
   var query = city + (zone ? ', ' + zone : '');
 
   var container = document.getElementById('search-results');
-  container.innerHTML = `<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ${query} via OpenStreetMap...</div>`;
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ' + query + ' via OpenStreetMap...</div>';
 
   try {
-    // Step 1: geocode city
-    var nominatimUrl = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + ',Romania&format=json&limit=1';
-    var geoRes = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(nominatimUrl), {
-      headers: { 'Accept-Language': 'ro' }
-    });
-    var geoData = await geoRes.json();
-    if (!geoData.length) { container.innerHTML = '<div class="empty"><p>Orașul nu a fost găsit. Încearcă alt nume.</p></div>'; return; }
-
-    var { lat, lon } = geoData[0];
+    var cityKey = city.toLowerCase().trim();
+    var coords = ORASE[cityKey];
+    if (!coords) {
+      container.innerHTML = '<div class="empty"><p>Orașul <strong>' + city + '</strong> nu este în lista noastră.<br>Orașe disponibile: București, Cluj, Timișoara, Iași, Constanța, Craiova, Brașov, Galați, Ploiești, Oradea, Arad, Pitești, Sibiu, Bacău și altele.</p></div>';
+      return;
+    }
+    var lat = coords.lat;
+    var lon = coords.lon;
     var delta = 0.08;
 
     // Step 2: Overpass query for opticians

@@ -376,9 +376,9 @@ tr:hover td { background: var(--surface2); }
             <span style="font-size:11px;color:#555;margin-top:3px;">Obtii gratuit de pe aistudio.google.com &rarr; Get API Key</span>
           </div>
           <div class="form-group" style="margin-bottom:12px;">
-            <label>Foursquare API Key (cautare cabinete)</label>
-            <input type="password" id="set-fskey" placeholder="Paste Foursquare key here" />
-            <span style="font-size:11px;color:#555;margin-top:3px;">Obtii gratuit de pe foursquare.com/developer &rarr; Create App &rarr; API Key</span>
+            <label>Apify API Token (cautare cabinete Google Maps)</label>
+            <input type="password" id="set-fskey" placeholder="apify_api_..." />
+            <span style="font-size:11px;color:#555;margin-top:3px;">Obtii gratuit de pe apify.com &rarr; Settings &rarr; Integrations &rarr; API token</span>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
             <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salveaza keys</button>
@@ -460,67 +460,129 @@ function updateStats() {
   localStorage.setItem('tiss_prospects', JSON.stringify(prospects));
 }
 
-// ── FOURSQUARE SEARCH ────────────────────────────────────
+// ── APIFY GOOGLE MAPS SEARCH ─────────────────────────────
 async function runSearch() {
   var city = document.getElementById('inp-city').value.trim();
   if (!city) { toast('Introdu un oras.'); return; }
   var zone = document.getElementById('inp-zone').value.trim();
-  var query = city + (zone ? ', ' + zone : '');
+  var searchTerm = 'cabinet optic ' + city + (zone ? ' ' + zone : '') + ' Romania';
 
-  var fsKey = localStorage.getItem('tiss_fskey') || '';
-  if (!fsKey) {
-    toast('Adauga Foursquare API key in Setari.');
+  var apifyToken = localStorage.getItem('tiss_fskey') || '';
+  if (!apifyToken) {
+    toast('Adauga Apify API token in Setari.');
     switchPanel('settings');
     return;
   }
 
   var container = document.getElementById('search-results');
-  container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se cauta cabinete optice in ' + query + '...</div>';
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se trimite job catre Apify Google Maps...</div>';
 
   try {
-    var url = 'https://api.foursquare.com/v3/places/search?query=optica&near=' + encodeURIComponent(query + ', Romania') + '&limit=50&fields=name,location,tel';
+    // Step 1: Start the Apify actor run
+    var runRes = await fetch('https://api.apify.com/v2/acts/compass~crawler-google-places/runs?token=' + apifyToken, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        searchStringsArray: [searchTerm],
+        maxCrawledPlacesPerSearch: 50,
+        language: 'ro',
+        countryCode: 'ro'
+      })
+    });
 
-    var res = await fetch(url, {
-      headers: {
-        'Authorization': fsKey,
-        'Accept': 'application/json'
+    if (!runRes.ok) {
+      var runErr = await runRes.json().catch(function(){return {};});
+      container.innerHTML = '<div class="empty"><p>Eroare Apify: ' + (runErr.error && runErr.error.message ? runErr.error.message : runRes.status) + '<br>Verifica API token-ul in Setari.</p></div>';
+      return;
+    }
+
+    var runData = await runRes.json();
+    var runId = runData.data && runData.data.id;
+    if (!runId) {
+      container.innerHTML = '<div class="empty"><p>Eroare: nu s-a putut porni job-ul Apify.</p></div>';
+      return;
+    }
+
+    // Step 2: Poll for completion
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Job pornit (ID: ' + runId + '). Se asteapta rezultate... ~1-2 minute</div>';
+
+    var status = 'RUNNING';
+    var attempts = 0;
+    var maxAttempts = 40;
+
+    while (status === 'RUNNING' || status === 'READY' || status === 'ABORTING') {
+      await new Promise(function(r){ setTimeout(r, 3000); });
+      attempts++;
+      if (attempts > maxAttempts) {
+        container.innerHTML = '<div class="empty"><p>Timeout — job-ul dureaza prea mult. Incearca din nou.</p></div>';
+        return;
+      }
+
+      var statusRes = await fetch('https://api.apify.com/v2/actor-runs/' + runId + '?token=' + apifyToken);
+      var statusData = await statusRes.json();
+      status = statusData.data && statusData.data.status;
+
+      var elapsed = attempts * 3;
+      container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se proceseaza... ' + elapsed + 's / ~90s</div>';
+    }
+
+    if (status !== 'SUCCEEDED') {
+      container.innerHTML = '<div class="empty"><p>Job-ul Apify a esuat cu status: ' + status + '</p></div>';
+      return;
+    }
+
+    // Step 3: Fetch results
+    var datasetRes = await fetch('https://api.apify.com/v2/actor-runs/' + runId + '/dataset/items?token=' + apifyToken + '&limit=100');
+    var dataset = await datasetRes.json();
+    var items = Array.isArray(dataset) ? dataset : [];
+
+    // Deduplicate by name + address
+    var seen = {};
+    var unique = [];
+    items.forEach(function(item) {
+      var key = (item.title || item.name || '').toLowerCase() + '|' + (item.address || '').toLowerCase();
+      if (!seen[key]) {
+        seen[key] = true;
+        unique.push(item);
       }
     });
 
-    if (!res.ok) {
-      var errData = await res.json().catch(function(){return {};});
-      container.innerHTML = '<div class="empty"><p>Eroare API Foursquare: ' + (errData.message || res.status) + '<br>Verifica API key-ul in Setari.</p></div>';
+    // Filter only optical shops
+    var filtered = unique.filter(function(item) {
+      var name = (item.title || item.name || '').toLowerCase();
+      var cat = (item.categoryName || item.category || '').toLowerCase();
+      return name.includes('optic') || name.includes('vedere') || name.includes('ochelar') ||
+             cat.includes('optic') || cat.includes('eyewear') || cat.includes('optician');
+    });
+
+    if (!filtered.length) filtered = unique;
+
+    if (!filtered.length) {
+      container.innerHTML = '<div class="empty"><p>Nu am gasit cabinete optice in <strong>' + city + '</strong>.</p></div>';
       return;
     }
 
-    var data = await res.json();
-    var results = data.results || [];
-
-    if (!results.length) {
-      container.innerHTML = '<div class="empty"><p>Nu am gasit cabinete optice in <strong>' + query + '</strong>.<br>Incearca un alt oras sau zona.</p></div>';
-      return;
-    }
-
-    var html = '<table><thead><tr><th>Cabinet</th><th>Adresa</th><th>Telefon</th><th></th></tr></thead><tbody>';
-    results.forEach(function(place) {
-      var name = (place.name || 'Cabinet optic').replace(/'/g, "&#39;");
-      var loc = place.location || {};
-      var address = (loc.address || loc.formatted_address || '-').replace(/'/g, "&#39;");
-      var phone = (place.tel || '-').replace(/'/g, "&#39;");
+    var html = '<table><thead><tr><th>Cabinet</th><th>Adresa</th><th>Telefon</th><th>Rating</th><th></th></tr></thead><tbody>';
+    filtered.forEach(function(place) {
+      var name = (place.title || place.name || 'Cabinet optic').replace(/'/g, "&#39;");
+      var address = (place.address || place.street || '-').replace(/'/g, "&#39;");
+      var phone = (place.phone || place.phoneUnformatted || '-').replace(/'/g, "&#39;");
+      var rating = place.totalScore ? place.totalScore.toFixed(1) + ' (' + (place.reviewsCount || 0) + ' rec.)' : '-';
       var cityEsc = city.replace(/'/g, "&#39;");
       html += '<tr>' +
         '<td class="name-cell">' + name + '</td>' +
         '<td style="font-size:12px;color:#999;">' + address + '</td>' +
         '<td class="mono">' + phone + '</td>' +
+        '<td style="font-size:12px;color:#999;">' + rating + '</td>' +
         '<td><button class="btn btn-ghost btn-sm" onclick="addProspect(this);" data-name="' + name + '" data-city="' + cityEsc + '" data-phone="' + phone + '" data-addr="' + address + '">+ Adauga</button></td>' +
         '</tr>';
     });
     html += '</tbody></table>';
-    html += '<div style="font-size:11px;color:#555;margin-top:10px;">Sursa: Foursquare Places &middot; ' + results.length + ' rezultate gasite</div>';
+    html += '<div style="font-size:11px;color:#555;margin-top:10px;">Sursa: Google Maps via Apify &middot; ' + filtered.length + ' rezultate unice</div>';
     container.innerHTML = html;
 
   } catch(err) {
-    container.innerHTML = '<div class="empty"><p>Eroare la cautare: ' + err.message + '</p></div>';
+    container.innerHTML = '<div class="empty"><p>Eroare: ' + err.message + '</p></div>';
   }
 }
 // ── ADD PROSPECT ───────────────────────────────────────

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TISS Optic Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #222;
+  --border: #2a2a2a;
+  --border2: #333;
+  --text: #f0f0f0;
+  --text2: #999;
+  --text3: #555;
+  --accent: #4f8ef7;
+  --accent-dim: #1a2d4f;
+  --accent-text: #7fb3ff;
+  --success: #3ecf8e;
+  --success-dim: #0d2e1f;
+  --warn: #f7a24f;
+  --warn-dim: #2e1f0d;
+  --danger: #f74f4f;
+  --danger-dim: #2e0d0d;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; }
+
+/* SIDEBAR */
+.sidebar { width: 200px; min-width: 200px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+.logo-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+.logo-tag { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.nav { padding: 8px 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; }
+.nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent-text); border-left-color: var(--accent); background: var(--accent-dim); }
+.sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+.api-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.dot.off { background: var(--danger); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.page-title { font-size: 14px; font-weight: 500; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; font-weight: 400; }
+.badge-blue { background: var(--accent-dim); color: var(--accent-text); }
+.badge-green { background: var(--success-dim); color: var(--success); }
+.badge-warn { background: var(--warn-dim); color: var(--warn); }
+.content { flex: 1; overflow-y: auto; padding: 20px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.stat-val { font-size: 26px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* CARD */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 12px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+
+/* FORMS */
+input, select, textarea {
+  background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+select option { background: var(--surface2); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.row { display: flex; gap: 8px; margin-bottom: 12px; }
+.row input, .row select { flex: 1; margin-bottom: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; border: none; font-weight: 500; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #3a7df6; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 6px; background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: var(--radius); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.btn-icon:hover { background: var(--surface2); color: var(--text); }
+.btn-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; color: var(--text3); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.name-cell { font-weight: 500; }
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
+
+/* STATUS */
+.status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+.status-nou { background: var(--accent-dim); color: var(--accent-text); }
+.status-contactat { background: var(--warn-dim); color: var(--warn); }
+.status-interesat { background: var(--success-dim); color: var(--success); }
+.status-client { background: #1f2e1a; color: #7ecf5e; }
+
+/* AI BOX */
+.ai-hint { background: var(--accent-dim); border: 1px solid #1e3a6e; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--accent-text); display: flex; gap: 8px; margin-bottom: 14px; }
+.ai-hint svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; margin-top: 1px; }
+
+/* SCRIPT OUTPUT */
+.script-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.script-box { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 14px; font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; min-height: 200px; font-family: 'DM Mono', monospace; }
+.script-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+/* EMPTY */
+.empty { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 1.5; margin: 0 auto 10px; display: block; }
+.empty p { font-size: 13px; }
+
+/* FUNNEL */
+.funnel-row { margin-bottom: 14px; }
+.funnel-meta { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+.funnel-meta span:first-child { color: var(--text2); }
+.funnel-meta span:last-child { font-family: 'DM Mono', monospace; color: var(--text); }
+.funnel-track { background: var(--surface2); border-radius: 4px; height: 6px; }
+.funnel-fill { height: 6px; border-radius: 4px; transition: width 0.5s ease; }
+
+/* ACTIVITY */
+.activity-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.activity-item:last-child { border-bottom: none; }
+.activity-text { color: var(--text2); }
+.activity-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+/* LOADING */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: var(--text); z-index: 1000; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* SETTINGS SAVE */
+.save-confirm { font-size: 12px; color: var(--success); display: none; margin-top: 8px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* STATUS SELECT */
+.status-select { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-size: 11px; padding: 3px 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-name">TISS Optic</div>
+      <div class="logo-tag">sales agent · ro</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="switchPanel('prospect')">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        Prospecți
+      </div>
+      <div class="nav-item" onclick="switchPanel('outreach')">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Outreach
+      </div>
+      <div class="nav-item" onclick="switchPanel('pipeline')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Pipeline
+      </div>
+      <div class="nav-item" onclick="switchPanel('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Setări
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="api-status">
+        <div class="dot" id="api-dot"></div>
+        <span id="api-label">Gemini conectat</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="page-title" id="page-title">Prospecți</span>
+        <span class="badge badge-blue" id="topbar-count">0 cabinete</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="switchPanel('settings')">Setări API</button>
+        <button class="btn btn-primary btn-sm" id="topbar-btn" onclick="runSearch()">
+          <svg style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Caută cabinete
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- PANEL PROSPECȚI -->
+      <div class="panel active" id="panel-prospect">
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Total</div>
+            <div class="stat-val" id="s-total">0</div>
+            <div class="stat-sub">prospecți salvați</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Necontactați</div>
+            <div class="stat-val" id="s-new">0</div>
+            <div class="stat-sub">de apelat</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Interesați</div>
+            <div class="stat-val" id="s-int">0</div>
+            <div class="stat-sub">în discuție</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Clienți</div>
+            <div class="stat-val" id="s-cli">0</div>
+            <div class="stat-sub">convertiți</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Caută cabinete optice</span>
+          </div>
+          <div class="row">
+            <input type="text" id="inp-city" placeholder="Oraș (ex: București, Cluj, Timișoara...)" />
+            <input type="text" id="inp-zone" placeholder="Zonă / cartier (opțional)" style="max-width:200px;" />
+            <button class="btn btn-primary" onclick="runSearch()" style="white-space:nowrap;">
+              <svg style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Caută
+            </button>
+          </div>
+          <div id="search-results">
+            <div class="empty">
+              <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <p>Introdu un oraș și apasă Caută — agentul găsește cabinete optice via OpenStreetMap.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="list-card" style="display:none;">
+          <div class="card-head">
+            <span class="card-title">Lista prospecților</span>
+            <select class="status-select" onchange="renderList()" id="filter-sel">
+              <option value="">Toate</option>
+              <option value="nou">Nou</option>
+              <option value="contactat">Contactat</option>
+              <option value="interesat">Interesat</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Cabinet</th><th>Oraș</th><th>Telefon</th><th>Tip</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="list-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL OUTREACH -->
+      <div class="panel" id="panel-outreach">
+        <div class="ai-hint">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Completează datele cabinetului și generează un script de cold call + obiecții probabile cu răspunsuri, personalizat pe profilul TISS Optic.
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Date prospect</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nume cabinet</label>
+              <input type="text" id="o-name" placeholder="ex: Optica Lumina" />
+            </div>
+            <div class="form-group">
+              <label>Oraș / Zonă</label>
+              <input type="text" id="o-city" placeholder="ex: Cluj-Napoca, Centru" />
+            </div>
+            <div class="form-group">
+              <label>Tip cabinet</label>
+              <select id="o-type">
+                <option value="cabinet independent">Cabinet independent (solo)</option>
+                <option value="parte dintr-o rețea">Parte dintr-o rețea</option>
+                <option value="optică în mall">Optică în mall</option>
+                <option value="clinică oftalmologică">Clinică oftalmologică cu optică</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Software actual (dacă știi)</label>
+              <input type="text" id="o-soft" placeholder="ex: nu știu / nu au / alt sistem..." />
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="generateScript()">
+              <svg style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Generează script + obiecții
+            </button>
+          </div>
+        </div>
+
+        <div id="script-out" style="display:none;">
+          <div class="script-grid">
+            <div>
+              <div class="script-label">Script cold call</div>
+              <div class="script-box" id="script-txt">Se generează...</div>
+            </div>
+            <div>
+              <div class="script-label">Obiecții + răspunsuri</div>
+              <div class="script-box" id="obj-txt">Se analizează...</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-ghost btn-sm" onclick="copyScript()">Copiază script</button>
+            <button class="btn btn-ghost btn-sm" onclick="generateScript()">Regenerează</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL PIPELINE -->
+      <div class="panel" id="panel-pipeline">
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Prospecți totali</div>
+            <div class="stat-val" id="p-total">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Contactați</div>
+            <div class="stat-val" id="p-cont">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Demo-uri</div>
+            <div class="stat-val" id="p-demo">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Clienți activi</div>
+            <div class="stat-val" id="p-cli">0</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px;">Funel vânzări</div>
+          <div id="funnel"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Activitate recentă</div>
+          <div id="activity"></div>
+        </div>
+      </div>
+
+      <!-- PANEL SETĂRI -->
+      <div class="panel" id="panel-settings">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Configurare API</div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Gemini API Key</label>
+            <input type="password" id="set-apikey" placeholder="AIzaSy..." />
+          </div>
+          <div class="ai-hint" style="margin-bottom:14px;">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Obții API key gratuit de pe <strong>aistudio.google.com</strong> → Get API Key. Nu necesită card bancar.
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salvează key</button>
+          </div>
+          <div class="save-confirm" id="api-saved">✓ API key salvat. Agentul este activ.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Profil produs TISS Optic</div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Pitch principal</label>
+            <textarea id="set-pitch" placeholder="ex: TISS Optic este un software complet pentru managementul cabinetelor optice — gestionare stoc lentile și rame, rețete, programări, rapoarte CAS. Interfață în română, suport local."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Prețuri</label>
+            <textarea id="set-price" placeholder="Prima filială: 2999 RON implementare + 299 RON/lună (1 acces). Filiale suplimentare: 1999 RON + 399 RON/lună (2-3 accese) sau 499 RON/lună (4-7 accese)."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Avantaje competitive</label>
+            <textarea id="set-adv" placeholder="ex: interfață completă în română, suport local Grasu personal, actualizări legislative incluse, hotline + TeamViewer, instrumente SMS marketing, actualizări CAS incluse"></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+            <button class="btn btn-primary btn-sm" onclick="saveProfile()">Salvează profil</button>
+          </div>
+          <div class="save-confirm" id="profile-saved">✓ Profil salvat. Scripturile vor folosi aceste date.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let prospects = JSON.parse(localStorage.getItem('tiss_prospects') || '[]');
+let activityLog = JSON.parse(localStorage.getItem('tiss_activity') || '[]');
+let profile = JSON.parse(localStorage.getItem('tiss_profile') || '{}');
+let GEMINI_KEY = localStorage.getItem('tiss_apikey') || '';
+
+// ── REPLACE THIS KEY WITH YOUR NEW KEY ────────────────
+// (cheia de mai jos este compromisă — înlocuiește-o)
+const EXAMPLE_KEY = 'AIzaSyDg--OJax1hhqMUdmeePNkPHiTka_0y3fg';
+if (!GEMINI_KEY && EXAMPLE_KEY) GEMINI_KEY = EXAMPLE_KEY;
+// ──────────────────────────────────────────────────────
+
+const PANELS = ['prospect','outreach','pipeline','settings'];
+
+function switchPanel(name) {
+  PANELS.forEach(p => {
+    document.getElementById('panel-' + p).classList.toggle('active', p === name);
+  });
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', PANELS[i] === name);
+  });
+  const titles = { prospect:'Prospecți', outreach:'Outreach', pipeline:'Pipeline', settings:'Setări' };
+  document.getElementById('page-title').textContent = titles[name];
+  if (name === 'pipeline') renderPipeline();
+  if (name === 'settings') loadSettings();
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── STATS ──────────────────────────────────────────────
+function updateStats() {
+  const total = prospects.length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-new').textContent = prospects.filter(p => p.status === 'nou').length;
+  document.getElementById('s-int').textContent = prospects.filter(p => p.status === 'interesat').length;
+  document.getElementById('s-cli').textContent = prospects.filter(p => p.status === 'client').length;
+  document.getElementById('topbar-count').textContent = total + ' cabinete';
+  localStorage.setItem('tiss_prospects', JSON.stringify(prospects));
+}
+
+// ── OVERPASS / OSM SEARCH ──────────────────────────────
+async function runSearch() {
+  const city = document.getElementById('inp-city').value.trim();
+  if (!city) { toast('Introdu un oraș.'); return; }
+  const zone = document.getElementById('inp-zone').value.trim();
+  const query = city + (zone ? ', ' + zone : '');
+
+  const container = document.getElementById('search-results');
+  container.innerHTML = `<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se caută cabinete optice în ${query} via OpenStreetMap...</div>`;
+
+  try {
+    // Step 1: geocode city
+    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)},Romania&format=json&limit=1`, {
+      headers: { 'Accept-Language': 'ro' }
+    });
+    const geoData = await geoRes.json();
+    if (!geoData.length) { container.innerHTML = '<div class="empty"><p>Orașul nu a fost găsit. Încearcă alt nume.</p></div>'; return; }
+
+    const { lat, lon } = geoData[0];
+    const delta = 0.08;
+
+    // Step 2: Overpass query for opticians
+    const overpassQ = `[out:json][timeout:25];(node["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta});way["shop"="optician"](${+lat-delta},${+lon-delta},${+lat+delta},${+lon+delta}););out body;`;
+    const ovRes = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: overpassQ
+    });
+    const ovData = await ovRes.json();
+    const elements = ovData.elements || [];
+
+    if (!elements.length) {
+      container.innerHTML = `<div class="empty"><p>Nu am găsit cabinete optice înregistrate în OpenStreetMap pentru ${query}.<br>Încearcă un oraș mai mare sau o zonă diferită.</p></div>`;
+      return;
+    }
+
+    let html = `<table><thead><tr><th>Cabinet</th><th>Adresă</th><th>Telefon</th><th></th></tr></thead><tbody>`;
+    const found = elements.slice(0, 30);
+    found.forEach((el, i) => {
+      const t = el.tags || {};
+      const name = t.name || t['name:ro'] || 'Cabinet optic';
+      const street = t['addr:street'] ? t['addr:street'] + (t['addr:housenumber'] ? ' ' + t['addr:housenumber'] : '') : '—';
+      const phone = t.phone || t['contact:phone'] || '—';
+      html += `<tr>
+        <td class="name-cell">${name}</td>
+        <td style="font-size:12px;color:#999;">${street}</td>
+        <td class="mono">${phone}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="addProspect('${name.replace(/'/g,"\\'")}','${city}','${phone.replace(/'/g,"\\'")}','${street.replace(/'/g,"\\'")}')">
+            + Adaugă
+          </button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<div style="font-size:11px;color:#555;margin-top:10px;">Sursa: OpenStreetMap · ${found.length} rezultate găsite</div>`;
+    container.innerHTML = html;
+
+  } catch(err) {
+    container.innerHTML = `<div class="empty"><p>Eroare la căutare: ${err.message}. Verifică conexiunea.</p></div>`;
+  }
+}
+
+// ── ADD PROSPECT ───────────────────────────────────────
+function addProspect(name, city, phone, address) {
+  if (prospects.find(p => p.name === name && p.city === city)) {
+    toast('Deja în listă: ' + name); return;
+  }
+  const p = { name, city, phone, address, status: 'nou', added: new Date().toLocaleDateString('ro-RO') };
+  prospects.push(p);
+  updateStats();
+  renderList();
+  document.getElementById('list-card').style.display = '';
+  logActivity('Adăugat: ' + name + ' (' + city + ')');
+  toast('Adăugat: ' + name);
+}
+
+// ── RENDER LIST ────────────────────────────────────────
+function renderList() {
+  const filter = document.getElementById('filter-sel').value;
+  const list = filter ? prospects.filter(p => p.status === filter) : prospects;
+  if (!list.length) {
+    document.getElementById('list-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:#555;padding:20px;">Niciun prospect.</td></tr>`;
+    return;
+  }
+  document.getElementById('list-body').innerHTML = list.map((p, i) => {
+    const ri = prospects.indexOf(p);
+    return `<tr>
+      <td class="name-cell">${p.name}</td>
+      <td style="color:#999;font-size:12px;">${p.city}</td>
+      <td class="mono">${p.phone || '—'}</td>
+      <td><span style="font-size:11px;color:#666;">${p.type || 'independent'}</span></td>
+      <td>
+        <select class="status-select" onchange="changeStatus(${ri}, this.value)">
+          <option value="nou" ${p.status==='nou'?'selected':''}>Nou</option>
+          <option value="contactat" ${p.status==='contactat'?'selected':''}>Contactat</option>
+          <option value="interesat" ${p.status==='interesat'?'selected':''}>Interesat</option>
+          <option value="client" ${p.status==='client'?'selected':''}>Client</option>
+        </select>
+      </td>
+      <td>
+        <button class="btn-icon" title="Outreach" onclick="loadOutreach(${ri})">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('list-card').style.display = '';
+}
+
+function changeStatus(idx, val) {
+  if (!prospects[idx]) return;
+  logActivity(prospects[idx].name + ': ' + prospects[idx].status + ' → ' + val);
+  prospects[idx].status = val;
+  updateStats();
+  renderList();
+}
+
+function loadOutreach(idx) {
+  const p = prospects[idx];
+  document.getElementById('o-name').value = p.name;
+  document.getElementById('o-city').value = p.city;
+  switchPanel('outreach');
+}
+
+// ── GEMINI SCRIPT GENERATION ───────────────────────────
+async function generateScript() {
+  const name = document.getElementById('o-name').value.trim();
+  const city = document.getElementById('o-city').value.trim();
+  const type = document.getElementById('o-type').value;
+  const soft = document.getElementById('o-soft').value.trim() || 'necunoscut';
+
+  if (!name) { toast('Introdu numele cabinetului.'); return; }
+
+  const key = GEMINI_KEY || localStorage.getItem('tiss_apikey');
+  if (!key) { toast('Adaugă API key Gemini în Setări.'); switchPanel('settings'); return; }
+
+  const pitch = profile.pitch || 'TISS Optic — software complet pentru cabinete optice: stoc lentile și rame, rețete, programări, rapoarte CAS.';
+  const price = profile.price || 'Prima filială: 2999 RON implementare + 299 RON/lună. Filiале suplimentare: 1999 RON + de la 399 RON/lună.';
+  const adv = profile.adv || 'Interfață în română, suport local, actualizări legislative incluse, hotline + TeamViewer, SMS marketing.';
+
+  document.getElementById('script-out').style.display = '';
+  document.getElementById('script-txt').textContent = 'Se generează script...';
+  document.getElementById('obj-txt').textContent = 'Se analizează obiecții...';
+
+  const prompt = `Ești un sales trainer expert în vânzări B2B de software pentru cabinete optice în România.
+
+Generează pentru un sales rep un script de cold call în română și obiecții probabile cu răspunsuri pentru:
+- Cabinet: "${name}", tip: "${type}", locație: "${city}"
+- Software actual: "${soft}"
+- Produs: ${pitch}
+- Preț: ${price}
+- Avantaje: ${adv}
+
+Răspunde EXCLUSIV cu JSON valid, fără markdown, fără text extra:
+{"script":"scriptul complet de cold call, natural, max 180 cuvinte, cu salut/introducere/pitch/CTA","objections":"3 obiecții reale cu răspuns scurt la fiecare, format: OBIECȚIE: ... \\nRĂSPUNS: ... \\n\\n"}`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) { document.getElementById('script-txt').textContent = 'Eroare API: ' + data.error.message; return; }
+
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    text = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+
+    document.getElementById('script-txt').textContent = parsed.script || 'Eroare la parsare.';
+    document.getElementById('obj-txt').textContent = parsed.objections || '—';
+    logActivity('Script generat pentru: ' + name);
+
+  } catch(err) {
+    document.getElementById('script-txt').textContent = 'Eroare: ' + err.message;
+    document.getElementById('obj-txt').textContent = 'Verifică API key-ul în Setări.';
+  }
+}
+
+function copyScript() {
+  const txt = document.getElementById('script-txt').textContent;
+  navigator.clipboard.writeText(txt).then(() => toast('Script copiat!'));
+}
+
+// ── PIPELINE ───────────────────────────────────────────
+function renderPipeline() {
+  const total = prospects.length;
+  const cont = prospects.filter(p => ['contactat','interesat','client'].includes(p.status)).length;
+  const inter = prospects.filter(p => ['interesat','client'].includes(p.status)).length;
+  const cli = prospects.filter(p => p.status === 'client').length;
+
+  document.getElementById('p-total').textContent = total;
+  document.getElementById('p-cont').textContent = cont;
+  document.getElementById('p-demo').textContent = inter;
+  document.getElementById('p-cli').textContent = cli;
+
+  const max = Math.max(total, 1);
+  const stages = [
+    { label: 'Prospecți totali', val: total, color: '#4f8ef7' },
+    { label: 'Contactați', val: cont, color: '#f7a24f' },
+    { label: 'Interesați', val: inter, color: '#3ecf8e' },
+    { label: 'Clienți activi', val: cli, color: '#7ecf5e' },
+  ];
+
+  document.getElementById('funnel').innerHTML = stages.map(s => `
+    <div class="funnel-row">
+      <div class="funnel-meta"><span>${s.label}</span><span>${s.val}</span></div>
+      <div class="funnel-track"><div class="funnel-fill" style="width:${Math.max((s.val/max)*100,s.val?4:0)}%;background:${s.color};"></div></div>
+    </div>
+  `).join('');
+
+  const log = activityLog.slice(0, 10);
+  document.getElementById('activity').innerHTML = log.length
+    ? log.map(a => `<div class="activity-item"><span class="activity-text">${a.text}</span><span class="activity-time">${a.time}</span></div>`).join('')
+    : '<div class="empty"><p>Nicio activitate înregistrată.</p></div>';
+}
+
+// ── ACTIVITY LOG ───────────────────────────────────────
+function logActivity(text) {
+  activityLog.unshift({ text, time: new Date().toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' }) });
+  if (activityLog.length > 50) activityLog.pop();
+  localStorage.setItem('tiss_activity', JSON.stringify(activityLog));
+}
+
+// ── SETTINGS ───────────────────────────────────────────
+function loadSettings() {
+  const saved = localStorage.getItem('tiss_apikey') || '';
+  if (saved) document.getElementById('set-apikey').value = saved;
+  document.getElementById('set-pitch').value = profile.pitch || '';
+  document.getElementById('set-price').value = profile.price || '';
+  document.getElementById('set-adv').value = profile.adv || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('set-apikey').value.trim();
+  if (!key) { toast('Introdu API key-ul.'); return; }
+  GEMINI_KEY = key;
+  localStorage.setItem('tiss_apikey', key);
+  document.getElementById('api-saved').style.display = 'block';
+  document.getElementById('api-dot').classList.remove('off');
+  document.getElementById('api-label').textContent = 'Gemini conectat';
+  setTimeout(() => document.getElementById('api-saved').style.display = 'none', 3000);
+}
+
+function saveProfile() {
+  profile.pitch = document.getElementById('set-pitch').value;
+  profile.price = document.getElementById('set-price').value;
+  profile.adv = document.getElementById('set-adv').value;
+  localStorage.setItem('tiss_profile', JSON.stringify(profile));
+  document.getElementById('profile-saved').style.display = 'block';
+  setTimeout(() => document.getElementById('profile-saved').style.display = 'none', 3000);
+  toast('Profil salvat!');
+}
+
+// ── INIT ───────────────────────────────────────────────
+updateStats();
+if (prospects.length) {
+  renderList();
+  document.getElementById('list-card').style.display = '';
+}
+if (!GEMINI_KEY) {
+  document.getElementById('api-dot').classList.add('off');
+  document.getElementById('api-label').textContent = 'Key lipsă';
+}
+</script>
+</body>
+</html>

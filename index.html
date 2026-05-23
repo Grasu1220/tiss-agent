@@ -678,16 +678,17 @@ function filterProspectDropdown(query) {
     return;
   }
 
-  dd.innerHTML = filtered.slice(0, 20).map(function(p, i) {
+  dd.innerHTML = '';
+  filtered.slice(0, 20).forEach(function(p) {
     var idx = prospects.indexOf(p);
     var div = document.createElement('div');
     div.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #333;';
     div.innerHTML = '<span style="font-weight:500;">' + p.name + '</span><span style="color:#666;font-size:11px;margin-left:8px;">' + p.city + '</span><span style="float:right;font-size:11px;color:#888;">' + p.status + '</span>';
     div.addEventListener('mouseover', function(){ this.style.background='#2a2a2a'; });
     div.addEventListener('mouseout', function(){ this.style.background='transparent'; });
-    div.addEventListener('click', function(){ selectProspectForOutreach(idx); });
-    return div.outerHTML;
-  }).join('');
+    (function(i){ div.addEventListener('click', function(e){ e.stopPropagation(); selectProspectForOutreach(i); }); })(idx);
+    dd.appendChild(div);
+  });
   dd.style.display = 'block';
 }
 

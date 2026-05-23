@@ -478,10 +478,13 @@ async function runSearch() {
   container.innerHTML = '<div style="padding:20px;text-align:center;color:#666;"><span class="spinner"></span> Se cauta cabinete optice in ' + query + '...</div>';
 
   try {
-    var url = 'https://api.foursquare.com/v3/places/search?query=optica&near=' + encodeURIComponent(query + ', Romania') + '&categories=15014&limit=50&fields=name,location,tel';
+    var url = 'https://api.foursquare.com/v3/places/search?query=optica&near=' + encodeURIComponent(query + ', Romania') + '&limit=50&fields=name,location,tel';
 
     var res = await fetch(url, {
-      headers: { 'Authorization': fsKey, 'Accept': 'application/json' }
+      headers: {
+        'Authorization': fsKey,
+        'Accept': 'application/json'
+      }
     });
 
     if (!res.ok) {
